@@ -30,11 +30,18 @@ jobs:
             fi
           
             if [[ $target == *"windows"* ]]; then
-              cp zig-out/bin/minichlink.exe builds/minichlink-${target}.exe
+             zip -j "builds/minichlink-${target}.zip" "zig-out/bin/minichlink.exe"
+             sha256sum "builds/minichlink-${target}.zip" | awk '{print $1}' >> "builds/minichlink-${target}.zip.sha256"
+          
+             (cd "zig-out/bin/ocd" ; zip -r "../../../builds/minichlink-ocd-${target}.zip" ".")
+             sha256sum "builds/minichlink-ocd-${target}.zip" | awk '{print $1}' >> "builds/minichlink-ocd-${target}.zip.sha256"
             else
-              cp zig-out/bin/minichlink builds/minichlink-${target}
+              tar -czf "builds/minichlink-${target}.tar.gz" "zig-out/bin/minichlink"
+              sha256sum "builds/minichlink-${target}.tar.gz" | awk '{print $1}' >> "builds/minichlink-${target}.tar.gz.sha256"
+          
+              tar -czf "builds/minichlink-ocd-${target}.tar.gz" "zig-out/bin/ocd"
+              sha256sum "builds/minichlink-ocd-${target}.tar.gz" | awk '{print $1}' >> "builds/minichlink-ocd-${target}.tar.gz.sha256"
             fi
-            cp -r zig-out/bin/ocd builds/minichlink-ocd-${target}
           done
           
           grep "^ *\.version =" build.zig.zon | awk -F\" '{print $2}' > builds/version
@@ -60,15 +67,12 @@ jobs:
             rm -rf zig-out
             nix develop -c zig build --verbose -Dcpu=baseline -Doptimize=ReleaseFast -Dtarget=${target}
           
-            if [[ $target == *"windows"* ]]; then
-              cp zig-out/bin/minichlink.exe builds/minichlink-${target}.exe
-            else
-              cp zig-out/bin/minichlink builds/minichlink-${target}
-            fi
-            cp -r zig-out/bin/ocd builds/minichlink-ocd-${target}
-          done
+            tar -czf "builds/minichlink-${target}.tar.gz" "zig-out/bin/minichlink"
+            sha256sum "builds/minichlink-${target}.tar.gz" | awk '{print $1}' >> "builds/minichlink-${target}.tar.gz.sha256"
           
-          grep "^ *\.version =" build.zig.zon | awk -F\" '{print $2}' > builds/version
+            tar -czf "builds/minichlink-ocd-${target}.tar.gz" "zig-out/bin/ocd"
+            sha256sum "builds/minichlink-ocd-${target}.tar.gz" | awk '{print $1}' >> "builds/minichlink-ocd-${target}.tar.gz.sha256"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: builds-macos
@@ -93,35 +97,16 @@ jobs:
           cd builds-linux
           echo "PROJECT_VERSION=$(cat version)" >> $GITHUB_ENV
           cat $GITHUB_ENV
-      - name: Create zips
-        run: |
-          for target_dir in "builds-macos" "builds-linux"; do
-            cd ${target_dir}
-          
-            skip_files=("version")
-            for file in *; do
-              if [[ " ${skip_files[@]} " =~ " $file " ]]; then
-                continue
-              fi
-          
-              chmod +x "$file"
-          
-              if [[ $file == *"windows"* ]]; then
-                zip -j "../${file%.*}.zip" "$file"
-                sha256sum "../${file%.*}.zip" | awk '{print $1}' >> "../${file%.*}.zip.sha256"
-              else
-                tar -czf "../${file%.*}.tar.gz" "$file"
-                sha256sum "../${file%.*}.tar.gz" | awk '{print $1}' >> "../${file%.*}.tar.gz.sha256"
-              fi
-          
-              cd ..
-            done
-          done
       - uses: softprops/action-gh-release@v2
         with:
           name: ${{ env.PROJECT_VERSION }}
           tag_name: ${{ env.PROJECT_VERSION }}
-          # body_path: builds-linux/release
           draft: false
           make_latest: true
-          files: "*.zip\n*.tar.gz\n*.sha256"
+          files: |
+            builds-macos/*.zip
+            builds-macos/*.tar.gz
+            builds-macos/*.sha256
+            builds-linux/*.zip
+            builds-linux/*.tar.gz
+            builds-linux/*.sha256
