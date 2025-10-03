@@ -33,14 +33,17 @@ pub fn main() !u8 {
         const version = try versionFromZon(allocator);
         defer versionFromZonFree(allocator, version);
 
-        const stderr = std.io.getStdErr().writer();
+        var buffer: [64]u8 = undefined;
+        const stderr = std.debug.lockStderrWriter(&buffer);
+        defer std.debug.unlockStderrWriter();
+
         try stderr.print("Minichlink As Open On-Chip Debugger {s}\n", .{version.version});
         return 0;
     }
 
-    var minichlink_args = std.ArrayList([*:0]u8).init(allocator);
-    defer minichlink_args.deinit();
-    try minichlink_args.append(args[0]);
+    var minichlink_args: std.ArrayList([*:0]u8) = .empty;
+    defer minichlink_args.deinit(allocator);
+    try minichlink_args.append(allocator, args[0]);
 
     var programZ: ?[:0]u8 = null;
     if (ocd_args.program) |program| {
@@ -58,9 +61,9 @@ pub fn main() !u8 {
             programZ = try allocator.dupeZ(u8, program);
         }
 
-        try minichlink_args.append(@constCast("-w"));
-        try minichlink_args.append(programZ.?);
-        try minichlink_args.append(@constCast("flash"));
+        try minichlink_args.append(allocator, @constCast("-w"));
+        try minichlink_args.append(allocator, programZ.?);
+        try minichlink_args.append(allocator, @constCast("flash"));
     }
     defer if (programZ) |v| {
         allocator.free(v);
@@ -69,22 +72,25 @@ pub fn main() !u8 {
     if (ocd_args.reset) {
         if (ocd_args.halt) {
             // Reboot into Halt.
-            try minichlink_args.append(@constCast("-a"));
+            try minichlink_args.append(allocator, @constCast("-a"));
         } else {
             // reBoot
-            try minichlink_args.append(@constCast("-b"));
+            try minichlink_args.append(allocator, @constCast("-b"));
         }
     } else {
         // rEsume
-        try minichlink_args.append(@constCast("-e"));
+        try minichlink_args.append(allocator, @constCast("-e"));
     }
 
     if (ocd_args.gdb_port > 0) {
-        try minichlink_args.append(@constCast("-G"));
+        try minichlink_args.append(allocator, @constCast("-G"));
     }
 
     if (ocd_args.echo) |echo| {
-        const stderr = std.io.getStdErr().writer();
+        var buffer: [64]u8 = undefined;
+        const stderr = std.debug.lockStderrWriter(&buffer);
+        defer std.debug.unlockStderrWriter();
+
         try stderr.writeAll(echo);
     }
 

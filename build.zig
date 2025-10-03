@@ -30,10 +30,12 @@ pub fn build(b: *std.Build) !void {
 
     const test_step = b.step("test", "Run tests");
     const minichlink_ocd_tests = b.addTest(.{
-        .target = target,
-        .optimize = optimize,
         .name = "test",
-        .root_source_file = b.path("src/main.zig"),
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .root_source_file = b.path("src/main.zig"),
+        }),
         .test_runner = .{ .path = b.path("test_runner.zig"), .mode = .simple },
     });
     // b.installArtifact(minichlink_ocd_tests);
@@ -71,7 +73,7 @@ fn createMinichlink(
         .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
-            .sanitize_c = false,
+            .sanitize_c = .off,
             .sanitize_thread = false,
         }),
     });
@@ -163,7 +165,7 @@ fn createLibusb(
         .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
-            .sanitize_c = false,
+            .sanitize_c = .off,
             .sanitize_thread = false,
         }),
     });
@@ -281,7 +283,7 @@ fn buildMinichlinkOcd(
             .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
-            .sanitize_c = false,
+            .sanitize_c = .off,
             .sanitize_thread = false,
         }),
     });
@@ -435,7 +437,7 @@ fn findFunction(buf: []const u8, name: []const u8) ?struct { usize, usize } {
 pub fn addPaths(mod: *std.Build.Module, target: std.Build.ResolvedTarget) !void {
     const b = mod.owner;
 
-    const paths = try std.zig.system.NativePaths.detect(b.allocator, target.result);
+    const paths = try std.zig.system.NativePaths.detect(b.allocator, &target.result);
 
     for (paths.lib_dirs.items) |item| {
         std.fs.cwd().access(item, .{}) catch |e| switch (e) {
