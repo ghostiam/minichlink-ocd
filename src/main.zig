@@ -240,11 +240,11 @@ test "OcdArgs.parse" {
 fn testOcdArgsParse(expected: OcdArgs, args_raw: []const [:0]const u8) !void {
     const allocator = std.testing.allocator;
 
-    var args = std.ArrayList([:0]u8).init(allocator);
-    defer args.deinit();
+    var args: std.ArrayList([:0]u8) = .empty;
+    defer args.deinit(allocator);
 
     for (args_raw) |arg_raw| {
-        try args.append(@constCast(arg_raw));
+        try args.append(allocator, @constCast(arg_raw));
     }
 
     const actual = try OcdArgs.parse(allocator, args.items);
