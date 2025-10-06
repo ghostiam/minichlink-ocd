@@ -305,7 +305,13 @@ fn buildMinichlinkOcd(
     try addPaths(ocd.root_module, target);
 
     b.getInstallStep().dependOn(&b.addInstallArtifact(ocd, .{}).step);
-    b.getInstallStep().dependOn(&b.addInstallFileWithDir(b.addWriteFiles().add("wch-riscv.cfg", ""), .{ .custom = b.pathJoin(&.{ "share", "openocd", "scripts", "board" }) }, "wch-riscv.cfg").step);
+    b.getInstallStep().dependOn(
+        &b.addInstallFileWithDir(
+            b.addWriteFiles().add("wch-riscv.cfg", ""),
+            .{ .custom = b.pathJoin(&.{ "share", "openocd", "scripts", "board" }) },
+            "wch-riscv.cfg",
+        ).step,
+    );
 
     return ocd;
 }

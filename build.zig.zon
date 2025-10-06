@@ -1,16 +1,16 @@
 .{
     .name = .minichlink,
-    .version = "1.0.0-dev-733af6",
+    .version = "1.0.0-dev-7e6e46",
     .minimum_zig_version = "0.15.1",
     .dependencies = .{
         .libusb = .{
             .url = "https://github.com/libusb/libusb/archive/refs/tags/v1.0.27.zip",
             .hash = "1220a596f46b3756d67cfa045696ba2b770f9f511b5af7fc4dd1cfe332f1b7992347",
         },
-        // zig fetch --save=ch32fun https://github.com/cnlohr/ch32fun/archive/733af62c26520d981c2a9f3e6b9485090109564d.zip
+        // zig fetch --save=ch32fun https://github.com/cnlohr/ch32fun/archive/7e6e46e9d1e4b507f6d4e310b8e5e2497a02e53d.zip
         .ch32fun = .{
-            .url = "https://github.com/cnlohr/ch32fun/archive/733af62c26520d981c2a9f3e6b9485090109564d.zip",
-            .hash = "N-V-__8AAN6viQAef7f1cTVfdIrrspHn_KhSBqMdQr1MSPLV",
+            .url = "https://github.com/cnlohr/ch32fun/archive/7e6e46e9d1e4b507f6d4e310b8e5e2497a02e53d.zip",
+            .hash = "N-V-__8AADDOiwDGahLQkxugCNrO-kUoChyCNdRZPU5OSa1o",
         },
     },
     .paths = .{
